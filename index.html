@@ -1,0 +1,134 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Voyajust - Planificateur de voyage</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+    <style>
+        /* Style pour intégrer la carte et les résultats dans le template */
+        #main {
+            padding: 2em 0;
+        }
+        #map {
+            height: 400px;
+            margin: 2em auto;
+            max-width: 800px;
+            border-radius: 8px;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+        }
+        #results {
+            margin: 2em auto;
+            max-width: 800px;
+            text-align: center;
+            padding: 2em;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+        }
+        .search-box {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2em;
+            border-radius: 8px;
+            margin: 2em auto;
+            max-width: 600px;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+        }
+        .search-row {
+            display: flex;
+            gap: 1em;
+            margin-bottom: 1em;
+        }
+        .search-input, .search-date {
+            flex: 1;
+            padding: 0.75em;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .search-button {
+            background: #4285F4;
+            color: white;
+            padding: 0.75em 2em;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="is-preload">
+    <div id="wrapper">
+        <header id="header">
+            <div class="inner">
+                <h1>Voyajust</h1>
+                <p>Planifie ton voyage en quelques secondes</p>
+            </div>
+        </header>
+
+        <!-- Contenu principal (intégré dans la structure d'Aerial) -->
+        <div id="main">
+            <section class="main-style1">
+                <div class="container">
+                    <div class="search-box">
+                        <form id="search-form">
+                            <div class="search-row">
+                                <input type="text" placeholder="Destination (ex: Paris)" class="search-input">
+                                <input type="date" class="search-date">
+                            </div>
+                            <button type="submit" class="search-button"><i class="fas fa-search"></i> Rechercher</button>
+                        </form>
+                    </div>
+
+                    <!-- Carte du monde -->
+                    <div id="map"></div>
+
+                    <!-- Résultats -->
+                    <div id="results"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Scripts -->
+        <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+        <script>
+            // Initialise la carte après que la page soit chargée
+            document.addEventListener('DOMContentLoaded', function() {
+                const map = L.map('map').setView([20, 0], 2);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(map);
+
+                // Gestion de la recherche
+                document.getElementById('search-form').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const destination = document.querySelector('.search-input').value;
+                    const date = document.querySelector('.search-date').value;
+                    document.getElementById('results').innerHTML = `<p>Recherche pour <strong>${destination}</strong> le <strong>${date}</strong>...</p>`;
+
+                    // Centrage sur la ville
+                    const cityCoords = {
+                        "Paris": [48.8566, 2.3522],
+                        "New York": [40.7128, -74.0060],
+                        "Tokyo": [35.6762, 139.6503],
+                        "Sydney": [-33.8688, 151.2093]
+                    };
+                    if (cityCoords[destination]) {
+                        map.setView(cityCoords[destination], 10);
+                        L.marker(cityCoords[destination]).addTo(map).bindPopup(destination);
+                    }
+                });
+            });
+
+            // Supprime l'effet de préchargement une fois tout chargé
+            window.onload = function() {
+                setTimeout(function() {
+                    document.body.classList.remove('is-preload');
+                }, 100);
+            };
+        </script>
+    </div>
+</body>
+</html>
