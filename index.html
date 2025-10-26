@@ -1,0 +1,145 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Voyajust - Planificateur de voyage</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+    <style>
+        /* Styles pour la carte et le formulaire (intégrés à Aerial) */
+        #map-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2em;
+            border-radius: 8px;
+            margin: 2em auto;
+            max-width: 800px;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+        }
+        #map {
+            height: 400px;
+            border-radius: 8px;
+        }
+        .search-box {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1.5em;
+            border-radius: 8px;
+            margin: 2em auto;
+            max-width: 600px;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+        }
+        .search-row {
+            display: flex;
+            gap: 1em;
+            margin-bottom: 1em;
+        }
+        .search-input, .search-date {
+            flex: 1;
+            padding: 0.75em;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .search-button {
+            background: #4285F4;
+            color: white;
+            padding: 0.75em 2em;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #results {
+            margin-top: 1.5em;
+            padding: 1.5em;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="is-preload">
+    <!-- Structure complète d'Aerial (obligatoire) -->
+    <div id="wrapper">
+        <div id="bg"></div>
+        <div id="overlay"></div>
+        <div id="main">
+
+            <!-- Header (modifié pour Voyajust) -->
+            <header id="header">
+                <h1>Voyajust</h1>
+                <p>Planifie ton voyage en quelques secondes</p>
+            </header>
+
+            <!-- Contenu personnalisé (intégré dans la structure) -->
+            <div class="inner">
+                <!-- Formulaire de recherche -->
+                <div class="search-box">
+                    <form id="search-form">
+                        <div class="search-row">
+                            <input type="text" placeholder="Destination (ex: Paris)" class="search-input" required>
+                            <input type="date" class="search-date" required>
+                        </div>
+                        <button type="submit" class="search-button"><i class="fas fa-search"></i> Rechercher</button>
+                    </form>
+
+                <!-- Carte -->
+                <div id="map-container">
+                    <div id="map"></div>
+                    <div id="results">Les résultats s'afficheront ici.</div>
+                </div>
+            </div>
+
+            <!-- Footer (conservé pour le design) -->
+            <footer id="footer">
+                <span class="copyright">&copy; Untitled. Design: <a href="http://html5up.net">HTML5 UP</a></span>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Scripts obligatoires d'Aerial -->
+    <script>
+        window.onload = function() {
+            document.body.classList.remove('is-preload');
+        };
+        window.ontouchmove = function() { return false; };
+        window.onorientationchange = function() { document.body.scrollTop = 0; };
+    </script>
+
+    <!-- Leaflet pour la carte -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script>
+        // Initialise la carte après le chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            const map = L.map('map').setView([20, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            // Gestion du formulaire
+            document.getElementById('search-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const destination = document.querySelector('.search-input').value;
+                const date = document.querySelector('.search-date').value;
+                document.getElementById('results').innerHTML = `
+                    <p>Recherche pour <strong>${destination}</strong> le <strong>${date}</strong>...</p>
+                `;
+
+                // Centrage sur la ville
+                const cityCoords = {
+                    "Paris": [48.8566, 2.3522],
+                    "New York": [40.7128, -74.0060],
+                    "Tokyo": [35.6762, 139.6503],
+                    "Sydney": [-33.8688, 151.2093]
+                };
+                if (cityCoords[destination]) {
+                    map.setView(cityCoords[destination], 10);
+                    L.marker(cityCoords[destination]).addTo(map).bindPopup(destination);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
