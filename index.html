@@ -1,0 +1,201 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Voyajust - Planificateur de voyage</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Image de fond fixe */
+        #bg {
+            background-image: url('images/bg.jpg') !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
+        }
+
+        /* Titre du site */
+        .site-title {
+            text-align: center;
+            color: #FF5A5F !important;
+            font-size: 3.5em !important;
+            font-weight: 700 !important;
+            margin: 2em 0 1em !important;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+            font-family: 'Poppins', sans-serif !important;
+        }
+
+        /* Barre de recherche moderne */
+        .search-container {
+            width: 90% !important;
+            max-width: 500px !important;
+            margin: 0 auto 2em !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            padding: 2em !important;
+            border-radius: 16px !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+            backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .search-form {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 1em !important;
+        }
+
+        .search-row {
+            display: flex !important;
+            gap: 10px !important;
+        }
+
+        .search-input, .search-date {
+            flex: 1 !important;
+            padding: 14px 16px !important;
+            border: 1px solid #e0e0e0 !important;
+            border-radius: 8px !important;
+            font-size: 16px !important;
+            transition: all 0.3s !important;
+            font-family: 'Poppins', sans-serif !important;
+        }
+
+        .search-input::placeholder, .search-date::placeholder {
+            color: #aaa !important;
+        }
+
+        .search-date::before {
+            content: attr(placeholder) !important;
+            color: #aaa !important;
+            position: absolute !important;
+            pointer-events: none !important;
+        }
+
+        .search-button {
+            background: #FF5A5F !important;
+            color: white !important;
+            padding: 14px 24px !important;
+            border: none !important;
+            border-radius: 8px !important;
+            cursor: pointer !important;
+            font-weight: 600 !important;
+            transition: all 0.3s !important;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+            margin-top: 10px !important;
+            font-family: 'Poppins', sans-serif !important;
+        }
+
+        .search-button:hover {
+            background: #E54B50 !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        /* Destinations populaires */
+        .destinations {
+            text-align: center !important;
+            margin-top: 2em !important;
+        }
+
+        .destinations h3 {
+            color: white !important;
+            margin-bottom: 1em !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+            font-family: 'Poppins', sans-serif !important;
+        }
+
+        .destination-tags {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            justify-content: center !important;
+            gap: 10px !important;
+        }
+
+        .destination-tag {
+            background: rgba(255, 255, 255, 0.9) !important;
+            padding: 8px 16px !important;
+            border-radius: 20px !important;
+            cursor: pointer !important;
+            transition: all 0.3s !important;
+            font-size: 14px !important;
+            color: #2c3e50 !important;
+            font-family: 'Poppins', sans-serif !important;
+        }
+
+        .destination-tag:hover {
+            background: #FF5A5F !important;
+            color: white !important;
+            transform: scale(1.05) !important;
+        }
+
+        /* Adaptation pour mobile */
+        @media (max-width: 768px) {
+            .search-row {
+                flex-direction: column !important;
+            }
+
+            .search-input, .search-date {
+                width: 100% !important;
+            }
+
+            .site-title {
+                font-size: 2.5em !important;
+            }
+        }
+    </style>
+</head>
+<body class="is-preload">
+    <div id="wrapper">
+        <!-- Conteneur principal -->
+        <div style="width: 100%; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box;">
+            <!-- Titre du site -->
+            <h1 class="site-title">Voyajust</h1>
+
+            <!-- Barre de recherche -->
+            <div class="search-container">
+                <form id="search-form" class="search-form">
+                    <div class="search-row">
+                        <input type="text" placeholder="Destination (ex: New York)" class="search-input" required>
+                        <input type="date" placeholder="Date" class="search-date" required>
+                    </div>
+                    <button type="submit" class="search-button">
+                        <i class="fas fa-search"></i> Rechercher
+                    </button>
+                </form>
+            </div>
+
+            <!-- Destinations populaires -->
+            <div class="destinations">
+                <h3>Destinations populaires</h3>
+                <div class="destination-tags">
+                    <div class="destination-tag" onclick="document.querySelector('.search-input').value = 'Paris'">Paris</div>
+                    <div class="destination-tag" onclick="document.querySelector('.search-input').value = 'Londres'">Londres</div>
+                    <div class="destination-tag" onclick="document.querySelector('.search-input').value = 'Madrid'">Madrid</div>
+                    <div class="destination-tag" onclick="document.querySelector('.search-input').value = 'Lisbonne'">Lisbonne</div>
+                    <div class="destination-tag" onclick="document.querySelector('.search-input').value = 'New York'">New York</div>
+                    <div class="destination-tag" onclick="document.querySelector('.search-input').value = 'Tokyo'">Tokyo</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        window.onload = function() {
+            document.body.classList.remove('is-preload');
+        };
+        window.ontouchmove = function() { return false; };
+        window.onorientationchange = function() { document.body.scrollTop = 0; };
+
+        // Gestion du formulaire
+        document.getElementById('search-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const destination = this.querySelector('.search-input').value;
+            const date = this.querySelector('.search-date').value;
+            alert(`Recherche pour ${destination} le ${date}`);
+        });
+    </script>
+</body>
+</html>
