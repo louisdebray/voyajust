@@ -1,0 +1,222 @@
+<!DOCTYPE HTML>
+<html lang="fr">
+<head>
+  <title>Voyajust - Planificateur de voyage</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* OVERRIDE du main.css : on désactive l'ancien fond animé par background-position */
+    #bg {
+      background: none !important;
+      animation: none !important;
+      overflow: hidden;         /* on masque ce qui dépasse */
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+    }
+
+    /* Rail de défilement */
+    .bg-rail {
+      position: absolute;
+      top: 0; left: 0;
+      height: 100%;
+      display: flex;
+      gap: 0;                  /* pas d'espace entre images */
+      will-change: transform;
+      animation: scroll var(--dur, 60s) linear infinite;
+      transform: translateX(0);
+    }
+
+    .bg-rail img {
+      height: 100%;
+      width: auto;             /* on garde le ratio */
+      flex: 0 0 auto;          /* pas de shrink */
+      object-fit: cover;
+      /* Optionnel: si tes images n’ont pas la même hauteur/ratio, tu peux utiliser
+         width: 100vw; object-fit: cover; pour forcer une largeur d’écran par image */
+    }
+
+    /* Animation continue: on translate le rail d'une largeur de "séquence" */
+    @keyframes scroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(calc(-1 * var(--seqw, 2000px))); }
+    }
+
+    /* ====== Ton style de page existant (barre de recherche, etc.) ====== */
+    .content-container {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .site-title {
+      text-align: center;
+      color: #FF5A5F;
+      font-size: 3.5em;
+      font-weight: 700;
+      margin: 2em 0 1em;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      font-family: 'Poppins', sans-serif;
+      width: 100%;
+    }
+    .search-container {
+      width: 90%;
+      max-width: 500px;
+      margin: 0 auto 2em;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 2em;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .search-form { display: flex; flex-direction: column; gap: 1em; }
+    .search-row { display: flex; gap: 10px; }
+    .search-input {
+      flex: 1; padding: 14px 16px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 16px;
+      transition: all 0.3s; font-family: 'Poppins', sans-serif;
+    }
+    .search-input::placeholder { color: #aaa; }
+    .search-date {
+      flex: 1; padding: 14px 16px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 16px;
+      transition: all 0.3s; font-family: 'Poppins', sans-serif; color: #333;
+    }
+    .search-input:focus, .search-date:focus { outline: none; border-color: #FF5A5F; box-shadow: 0 0 0 2px rgba(255, 90, 95, 0.2); }
+    .search-button {
+      background: #FF5A5F; color: white; padding: 14px 24px; border: none; border-radius: 8px;
+      cursor: pointer; font-weight: 600; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); margin-top: 10px; font-family: 'Poppins', sans-serif;
+    }
+    .search-button:hover { background: #E54B50; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); }
+    .destinations { text-align: center; margin-top: 2em; width: 100%; }
+    .destinations h3 { color: white; margin-bottom: 1em; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); font-family: 'Poppins', sans-serif; }
+    .destination-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .destination-tag {
+      background: rgba(255, 255, 255, 0.9); padding: 8px 16px; border-radius: 20px; cursor: pointer; transition: all 0.3s;
+      font-size: 14px; color: #2c3e50; font-family: 'Poppins', sans-serif;
+    }
+    .destination-tag:hover { background: #FF5A5F; color: white; transform: scale(1.05); }
+    @media (max-width: 768px) {
+      .search-row { flex-direction: column; }
+      .search-input, .search-date { width: 100%; }
+      .site-title { font-size: 2.5em; }
+    }
+  </style>
+</head>
+
+<body class="is-preload">
+  <div id="wrapper">
+    <!-- Fond défilant -->
+    <div id="bg">
+      <div class="bg-rail" id="bg-rail" aria-hidden="true"></div>
+    </div>
+    <div id="overlay"></div>
+
+    <!-- Contenu principal -->
+    <div class="content-container">
+      <h1 class="site-title">Voyajust</h1>
+
+      <div class="search-container">
+        <form id="search-form" class="search-form">
+          <div class="search-row">
+            <input type="text" placeholder="Destination (ex: New York)" class="search-input" required>
+            <input type="date" class="search-date" required>
+          </div>
+          <button type="submit" class="search-button">
+            <i class="fas fa-search"></i> Rechercher
+          </button>
+        </form>
+      </div>
+
+      <div class="destinations">
+        <h3>Destinations populaires</h3>
+        <div class="destination-tags">
+          <div class="destination-tag" onclick="document.querySelector('.search-input').value = 'Paris'">Paris</div>
+          <div class="destination-tag" onclick="document.querySelector('.search-input').value = 'Londres'">Londres</div>
+          <div class="destination-tag" onclick="document.querySelector('.search-input').value = 'Madrid'">Madrid</div>
+          <div class="destination-tag" onclick="document.querySelector('.search-input').value = 'Lisbonne'">Lisbonne</div>
+          <div class="destination-tag" onclick="document.querySelector('.search-input').value = 'New York'">New York</div>
+          <div class="destination-tag" onclick="document.querySelector('.search-input').value = 'Tokyo'">Tokyo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    window.onload = function() {
+      document.body.classList.remove('is-preload');
+    };
+    window.ontouchmove = function() { return false; };
+    window.onorientationchange = function() { document.body.scrollTop = 0; };
+
+    // Gestion du formulaire
+    document.getElementById('search-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const destination = this.querySelector('.search-input').value;
+      const date = this.querySelector('.search-date').value;
+      alert(`Recherche pour ${destination} le ${date}`);
+    });
+  </script>
+
+  <script>
+    // ===== FOND À DÉFILEMENT CONTINU (SANS COUPURE) =====
+    // Place tes images ici :
+    const IMG_SOURCES = [
+      'assets/css/images/bg1.jpg',
+      'assets/css/images/bg2.jpg',
+      'assets/css/images/bg3.jpg',
+      'assets/css/images/bg4.jpg'
+    ];
+
+    // Vitesse du défilement (pixels par seconde)
+    const SPEED_PX_S = 40; // ajuste à ton goût: + grand = plus rapide
+
+    const rail = document.getElementById('bg-rail');
+
+    // Crée une séquence d'images
+    function createSequence(urls) {
+      const frag = document.createDocumentFragment();
+      urls.forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = '';
+        frag.appendChild(img);
+      });
+      return frag;
+    }
+
+    // On ajoute 2 fois la séquence pour boucler sans saut
+    rail.appendChild(createSequence(IMG_SOURCES));
+    rail.appendChild(createSequence(IMG_SOURCES));
+
+    // Quand toutes les images sont chargées, on calcule la largeur d'une séquence
+    function imagesLoaded(container) {
+      const imgs = Array.from(container.querySelectorAll('img'));
+      return Promise.all(imgs.map(img => {
+        if (img.complete && img.naturalWidth) return Promise.resolve();
+        return new Promise(res => img.addEventListener('load', res, { once: true }));
+      }));
+    }
+
+    imagesLoaded(rail).then(() => {
+      // Largeur totale du rail (deux séquences)
+      const totalW = rail.scrollWidth;
+      const seqW = totalW / 2; // largeur d'une séquence
+
+      // Durée d'anim = distance / vitesse
+      const durationSec = seqW / SPEED_PX_S;
+
+      rail.style.setProperty('--seqw', seqW + 'px');
+      rail.style.setProperty('--dur', durationSec + 's');
+      // (L'animation CSS utilise --seqw et --dur)
+    });
+  </script>
+</body>
+</html>
