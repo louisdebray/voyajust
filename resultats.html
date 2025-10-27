@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voyajust - Résultats</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: #2c3e50;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Header fixe */
+        .header {
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        .logo {
+            height: 40px;
+            width: auto;
+        }
+        /* Formulaire */
+        .search-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .search-form input {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            min-width: 150px;
+            font-family: inherit;
+        }
+        .search-form button {
+            padding: 10px 20px;
+            background: #FF5A5F;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            height: 40px;
+        }
+        /* Conteneur principal */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        /* Sections */
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .section h2 {
+            color: #FF5A5F;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section p {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .price {
+            color: #FF5A5F;
+            font-weight: bold;
+        }
+        .btn {
+            background: #FF5A5F;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #FF5A5F;
+            font-style: italic;
+        }
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            padding: 10px;
+            font-weight: 600;
+        }
+        /* Grille pour les lieux */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .grid-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #eee;
+        }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .search-form {
+                flex-direction: column;
+                width: 100%;
+            }
+            .search-form input,
+            .search-form button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header avec logo propre -->
+    <header class="header">
+        <div class="logo-container">
+            <a href="index.html">
+                <img src="assets/css/images/logo.png" alt="Voyajust" class="logo">
+            </a>
+        </div>
+        <form class="search-form" id="modify-form">
+            <input type="text" id="modify-destination" placeholder="Destination (ex: Paris)">
+            <input type="date" id="modify-date">
+            <button type="submit"><i class="fas fa-sync-alt"></i> Mettre à jour</button>
+        </form>
+    </header>
+    <!-- Contenu défilable -->
+    <main class="main-content">
+        <div class="container">
+            <h1 style="text-align: center; color: #FF5A5F; margin-bottom: 30px;" id="titre-resultats">
+                Résultats pour : <span id="destination-title"></span> (<span id="date-title"></span>)
+            </h1>
+
+            <!-- Conteneur pour les messages de chargement/erreur -->
+            <div class="loading" id="loading">Recherche des meilleures options en cours...</div>
+            <div class="error" id="error" style="display: none;"></div>
+
+            <!-- Vol -->
+            <div class="section" id="vol-section" style="display: none;">
+                <h2><i class="fas fa-plane"></i> Vol</h2>
+                <p id="vol-info"><span id="vol-depart"></span> → <span id="destination-vol"></span> : <span class="price" id="vol-prix"></span></p>
+                <p id="vol-details">Compagnie : <span id="vol-compagnie"></span> | <span id="vol-duree"></span></p>
+                <button class="btn" id="vol-btn">Réserver</button>
+            </div>
+
+            <!-- Hébergement -->
+            <div class="section" id="hotel-section" style="display: none;">
+                <h2><i class="fas fa-hotel"></i> Hébergement</h2>
+                <p id="hotel-info"><span id="hotel-nom"></span> : <span class="price" id="hotel-prix"></span>/nuit</p>
+                <p id="hotel-details"><span id="hotel-avis"></span> | <span id="hotel-note"></span>/5</p>
+                <button class="btn" id="hotel-btn">Voir options</button>
+            </div>
+
+            <!-- Transport -->
+            <div class="section" id="transport-section" style="display: none;">
+                <h2><i class="fas fa-subway"></i> Transport</h2>
+                <p id="transport-info"><span id="transport-type"></span> : <span class="price" id="transport-prix"></span> | <span id="transport-duree"></span></p>
+                <button class="btn" id="transport-btn">Itinéraire</button>
+            </div>
+
+            <!-- Guide -->
+            <div class="section" id="guide-section" style="display: none;">
+                <h2><i class="fas fa-landmark"></i> Guide</h2>
+                <div class="grid" id="guide-grid"></div>
+            </div>
+
+            <!-- Conseils -->
+            <div class="section" id="conseils-section" style="display: none;">
+                <h2><i class="fas fa-lightbulb"></i> Conseils</h2>
+                <p><strong>Budget estimé:</strong> <span id="conseil-budget"></span></p>
+                <p><strong>Météo:</strong> <span id="conseil-meteo"></span></p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Mapping ville → code IATA (à compléter)
+        const cityToIATA = {
+            "Paris": "PAR",
+            "Londres": "LON",
+            "Madrid": "MAD",
+            "Lisbonne": "LIS",
+            "New York": "NYC",
+            "Tokyo": "TYO",
+            "Barcelona": "BCN",
+            "Rome": "ROM",
+            "Berlin": "BER"
+        };
+
+        // Récupère les paramètres de l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const destination = urlParams.get('destination') || "New York";
+        const date = urlParams.get('date') || new Date().toISOString().split('T')[0];
+
+        // Met à jour le titre
+        document.getElementById('destination-title').textContent = destination;
+        document.getElementById('date-title').textContent = new Date(date).toLocaleDateString('fr-FR');
+        document.getElementById('modify-destination').value = destination;
+        document.getElementById('modify-date').value = date;
+
+        // Géolocalisation pour détecter l'aéroport de départ
+        let originCode = "PAR"; // Valeur par défaut
+
+        function getUserLocation() {
+            return new Promise((resolve, reject) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+                            // En production, utilise une API pour convertir lat/lng en code IATA
+                            console.log("Position détectée :", position.coords.latitude, position.coords.longitude);
+                            // Exemple : si Paris, on garde "PAR"
+                            resolve("PAR");
+                        },
+                        error => {
+                            console.error("Géolocalisation impossible, utilisation de PAR par défaut.");
+                            resolve("PAR");
+                        }
+                    );
+                } else {
+                    console.error("Géolocalisation non supportée.");
+                    resolve("PAR");
+                }
+            });
+        }
+
+        // Simulation d'un appel backend pour obtenir un token Amadeus
+        async function getAmadeusToken() {
+            console.log("Appel simulé pour obtenir un token Amadeus (à remplacer par un appel à ton backend).");
+            return "token_simulé";
+        }
+
+        // Recherche de vols (simulée)
+        async function searchFlights(token, origin, destination, date) {
+            console.log(`Recherche de vols de ${origin} à ${destination} le ${date}...`);
+            // En production, appelle ton backend ici
+            return {
+                data: [
+                    {
+                        itineraries: [{
+                            segments: [{
+                                departure: { iataCode: origin, at: new Date(date).toISOString() },
+                                arrival: { iataCode: destination, carrierCode: "AF" },
+                                duration: "PT8H"
+                            }]
+                        }],
+                        price: { total: "600", currency: "EUR" },
+                        travelerPricings: [{ links: { flightDates: "https://example.com/flight" } }]
+                    }
+                ]
+            };
+        }
+
+        // Recherche d'hôtels (simulée)
+        async function searchHotels(token, cityCode, checkInDate) {
+            console.log(`Recherche d'hôtels à ${cityCode} à partir du ${checkInDate}...`);
+            // En production, appelle ton backend ici
+            return {
+                data: [
+                    {
+                        hotel: { name: "Hôtel Central", rating: "4.5", cityCode: cityCode },
+                        offers: [{
+                            price: { total: "150", currency: "EUR" },
+                            links: { self: "https://example.com/hotel" }
+                        }]
+                    }
+                ]
+            };
+        }
+
+        // Affiche les résultats
+        function displayResults(flights, hotels, origin) {
+            // Vol
+            if (flights.data && flights.data.length > 0) {
+                const flight = flights.data[0];
+                document.getElementById('vol-depart').textContent = origin;
+                document.getElementById('destination-vol').textContent = flight.itineraries[0].segments[0].arrival.iataCode;
+                document.getElementById('vol-prix').textContent = `${flight.price.total}€ A/R`;
+                document.getElementById('vol-compagnie').textContent = flight.itineraries[0].segments[0].arrival.carrierCode;
+                document.getElementById('vol-duree').textContent = `${parseInt(flight.itineraries[0].segments[0].duration.replace('PT', '').replace('H', ''))}h`;
+                document.getElementById('vol-btn').onclick = () => window.open(flight.travelerPricings[0].links.flightDates, '_blank');
+                document.getElementById('vol-section').style.display = 'block';
+            }
+
+            // Hébergement
+            if (hotels.data && hotels.data.length > 0) {
+                const hotel = hotels.data[0];
+                document.getElementById('hotel-nom').textContent = hotel.hotel.name;
+                document.getElementById('hotel-prix').textContent = `${hotel.offers[0].price.total}€`;
+                document.getElementById('hotel-avis').textContent = "1200 avis";
+                document.getElementById('hotel-note').textContent = hotel.hotel.rating;
+                document.getElementById('hotel-btn').onclick = () => window.open(hotel.offers[0].links.self, '_blank');
+                document.getElementById('hotel-section').style.display = 'block';
+            }
+
+            // Transport (simulé)
+            document.getElementById('transport-info').textContent = `Métro depuis l'aéroport : 10€ | 45 min`;
+            document.getElementById('transport-section').style.display = 'block';
+
+            // Guide (simulé)
+            const guideGrid = document.getElementById('guide-grid');
+            const lieux = {
+                "PAR": ["Tour Eiffel", "Louvre", "Notre-Dame"],
+                "NYC": ["Statue de la Liberté", "Central Park", "Times Square"],
+                "LON": ["Big Ben", "London Eye", "Tower Bridge"],
+                "MAD": ["Musée du Prado", "Parc du Retiro", "Palais Royal"]
+            }[destination] || ["Lieu 1", "Lieu 2", "Lieu 3"];
+
+            lieux.forEach(lieu => {
+                const div = document.createElement('div');
+                div.className = 'grid-item';
+                div.innerHTML = `<p>${lieu}</p>`;
+                guideGrid.appendChild(div);
+            });
+            document.getElementById('guide-section').style.display = 'block';
+
+            // Conseils (simulés)
+            document.getElementById('conseil-budget').textContent = "100€/jour";
+            document.getElementById('conseil-meteo').textContent = "5-12°C";
+            document.getElementById('conseils-section').style.display = 'block';
+
+            // Masque le chargement
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Charge les résultats au chargement de la page
+        window.onload = async function() {
+            try {
+                originCode = await getUserLocation();
+                const token = await getAmadeusToken();
+                const destinationCode = cityToIATA[destination] || "NYC";
+
+                const flights = await searchFlights(token, originCode, destinationCode, date);
+                const hotels = await searchHotels(token, destinationCode, date);
+
+                displayResults(flights, hotels, originCode);
+            } catch (err) {
+                document.getElementById('error').textContent = "Erreur lors de la recherche. Veuillez réessayer.";
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('loading').style.display = 'none';
+                console.error(err);
+            }
+        };
+
+        // Soumission du formulaire de modification
+        document.getElementById('modify-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const destination = document.getElementById('modify-destination').value;
+            const date = document.getElementById('modify-date').value;
+            window.location.href = `resultats.html?destination=${encodeURIComponent(destination)}&date=${date}`;
+        });
+    </script>
+</body>
+</html>
