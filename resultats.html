@@ -1,0 +1,307 @@
+<!DOCTYPE HTML>
+<html lang="fr">
+<head>
+  <title>Voyajust - Résultats</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* === RESET ET BASE === */
+    html, body {
+      height: auto;
+      min-height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      color: #2c3e50;
+      background: #f8f9fa;
+    }
+
+    /* === HEADER === */
+    .results-header {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 1em 2em;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .results-logo {
+      height: 40px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.1));
+    }
+    .results-logo:hover {
+      transform: scale(1.05);
+    }
+
+    /* === FORMULAIRE === */
+    .modify-form {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .modify-input,
+    .modify-date {
+      padding: 10px 14px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      min-width: 150px;
+      color: #000;
+      background: white;
+    }
+    .modify-date::-webkit-datetime-edit {
+      color: #000 !important;
+    }
+    .modify-button {
+      background: #FF5A5F;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      height: 40px;
+    }
+    .modify-button:hover {
+      background: #E54B50;
+    }
+
+    /* === CONTENU PRINCIPAL (DÉFILEMENT ACTIF) === */
+    .results-main {
+      min-height: calc(100vh - 80px); /* Hauteur minimale = viewport - header */
+      padding-bottom: 2em; /* Espace en bas */
+    }
+    .results-container {
+      max-width: 800px;
+      margin: 2em auto;
+      padding: 2em;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2em;
+    }
+    .results-title {
+      text-align: center;
+      margin-bottom: 2em;
+      padding-bottom: 1em;
+      border-bottom: 1px solid #eee;
+    }
+    .results-title h1 {
+      color: #FF5A5F;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    /* === SECTIONS === */
+    .section {
+      background: white;
+      margin-bottom: 2em;
+      padding: 1.5em;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    .section h2 {
+      margin-top: 0;
+      color: #2c3e50;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.2em;
+    }
+    .section h2 i {
+      color: #FF5A5F;
+    }
+    .placeholder p {
+      margin: 0.5em 0;
+      color: #555;
+    }
+    .btn {
+      background: #FF5A5F;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 1em;
+    }
+    .btn:hover {
+      background: #E54B50;
+      transform: translateY(-2px);
+    }
+    .prix {
+      font-weight: 700;
+      color: #FF5A5F;
+      font-size: 1.1em;
+    }
+
+    /* === GUIDE === */
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1em;
+      margin-top: 1em;
+    }
+    .guide-item {
+      background: #f8f9fa;
+      padding: 1em;
+      border-radius: 8px;
+      text-align: center;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #2c3e50;
+    }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 768px) {
+      .results-header {
+        flex-direction: column;
+        gap: 1em;
+        padding: 1em;
+      }
+      .modify-form {
+        flex-direction: column;
+        width: 100%;
+      }
+      .modify-input,
+      .modify-date,
+      .modify-button {
+        width: 100%;
+        min-width: unset;
+      }
+      .results-container {
+        margin: 0;
+        border-radius: 0;
+        width: 100%;
+      }
+      .guide-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="results-header">
+    <a href="index.html">
+      <img src="assets/css/images/logo.png?v=4" alt="Voyajust" class="results-logo"
+           onerror="this.onerror=null; tryNextLogo(this);">
+    </a>
+    <form id="modify-form" class="modify-form">
+      <input type="text" id="modify-destination" class="modify-input" placeholder="Destination (ex: Paris)">
+      <input type="date" id="modify-date" class="modify-date">
+      <button type="submit" class="modify-button">
+        <i class="fas fa-sync-alt"></i> Mettre à jour
+      </button>
+    </form>
+  </header>
+
+  <!-- Conteneur principal avec défilement -->
+  <main class="results-main">
+    <div class="results-container">
+      <div class="results-title">
+        <h1 id="titre-resultats">Résultats pour : New York (10-17 novembre 2025)</h1>
+      </div>
+
+      <!-- Vol -->
+      <div class="section">
+        <h2><i class="fas fa-plane"></i> Vol</h2>
+        <div class="placeholder">
+          <p>Paris → <span id="destination-vol">New York</span> : <span class="prix">600€ A/R</span></p>
+          <p>Compagnie : Air France | Durée : 8h</p>
+          <button class="btn">Réserver</button>
+        </div>
+      </div>
+
+      <!-- Hébergement -->
+      <div class="section">
+        <h2><i class="fas fa-hotel"></i> Hébergement</h2>
+        <div class="placeholder">
+          <p>Hôtel 4* à Manhattan : <span class="prix">150€/nuit</span></p>
+          <p>1200 avis | 4.5/5</p>
+          <button class="btn">Voir les options</button>
+        </div>
+      </div>
+
+      <!-- Transport (maintenant visible) -->
+      <div class="section">
+        <h2><i class="fas fa-subway"></i> Transport aéroport → logement</h2>
+        <div class="placeholder">
+          <p>Métro depuis JFK : <span class="prix">10€</span> | 45 min</p>
+          <button class="btn">Itinéraire</button>
+        </div>
+      </div>
+
+      <!-- Guide (maintenant visible) -->
+      <div class="section">
+        <h2><i class="fas fa-landmark"></i> Guide touristique</h2>
+        <div class="guide-grid">
+          <div class="guide-item"><p>Statue de la Liberté</p></div>
+          <div class="guide-item"><p>Central Park</p></div>
+          <div class="guide-item"><p>Times Square</p></div>
+        </div>
+      </div>
+
+      <!-- Conseils (maintenant visible) -->
+      <div class="section">
+        <h2><i class="fas fa-lightbulb"></i> Conseils pratiques</h2>
+        <div class="placeholder">
+          <p><strong>Budget moyen :</strong> 100€/jour</p>
+          <p><strong>Météo :</strong> 5°C - 12°C</p>
+          <p><strong>Transport :</strong> MetroCard 33$</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+      const params = new URLSearchParams(window.location.search);
+      const destination = params.get('destination') || "New York";
+      const date = params.get('date') || getDefaultDate();
+
+      document.getElementById('titre-resultats').textContent =
+        `Résultats pour : ${destination} (${new Date(date).toLocaleDateString('fr-FR')})`;
+      document.getElementById('destination-vol').textContent = destination;
+      document.getElementById('modify-destination').value = destination;
+      document.getElementById('modify-date').value = date;
+    });
+
+    // Date par défaut
+    function getDefaultDate() {
+      const today = new Date();
+      return today.toISOString().split('T')[0];
+    }
+
+    // Soumission du formulaire
+    document.getElementById('modify-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const destination = document.getElementById('modify-destination').value;
+      const date = document.getElementById('modify-date').value;
+      window.location.href = `resultats.html?destination=${encodeURIComponent(destination)}&date=${date}`;
+    });
+
+    // Fallback logo
+    function tryNextLogo(img) {
+      const candidates = ['assets/css/images/logo.png', 'logo.png'];
+      const i = Number(img.dataset.i || 0);
+      if (i >= candidates.length) return;
+      img.dataset.i = i + 1;
+      img.src = candidates[i] + '?v=' + Date.now();
+    }
+  </script>
+</body>
+</html>
