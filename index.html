@@ -1,0 +1,294 @@
+<!DOCTYPE HTML>
+<html lang="fr">
+<head>
+  <title>Voyajust - Planificateur de voyage</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* === TON CSS EXISTANT === */
+    #bg { background: none !important; animation: none !important; overflow: hidden; position: fixed; inset: 0; z-index: -1; }
+    .bg-rail { position: absolute; top: 0; left: 0; height: 100%; display: flex; gap: 0; will-change: transform; animation: scroll var(--dur, 60s) linear infinite; transform: translateX(0); pointer-events: none; }
+    /* ... (garde ton CSS existant) ... */
+    #results-container {
+      display: none;
+      margin-top: 2em;
+      width: 90%;
+      max-width: 800px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 2em;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      animation: fadeIn 0.5s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .flight-result {
+      background: white;
+      margin-bottom: 1em;
+      padding: 1em;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .flight-result:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .flight-price {
+      font-size: 1.4em;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    .flight-link {
+      color: #FF5A5F;
+      text-decoration: none;
+      font-size: 0.9em;
+    }
+    .loading {
+      text-align: center;
+      padding: 2em;
+      color: #FF5A5F;
+    }
+  </style>
+</head>
+<body class="is-preload">
+  <div id="wrapper">
+    <div id="bg">
+      <div class="bg-rail" id="bg-rail" aria-hidden="true"></div>
+    </div>
+    <div id="overlay"></div>
+    <div class="content-container">
+      <img id="site-logo" src="assets/css/images/logo.png?v=4" alt="Voyajust" class="site-logo"
+           onerror="this.onerror=null; tryNextLogo(this);">
+
+      <div class="search-container">
+        <form id="search-form" class="search-form">
+          <div class="search-row">
+            <input type="text" id="destination-input" placeholder="Destination (ex: New York)" class="search-input" required>
+            <input type="date" id="date-input" class="search-date" required>
+          </div>
+          <button type="submit" class="search-button">
+            <i class="fas fa-search"></i> Rechercher
+          </button>
+        </form>
+      </div>
+
+      <div id="results-container"></div>
+
+      <div class="destinations">
+        <h3>Destinations populaires</h3>
+        <div class="destination-tags" id="destinations-list">
+          <button type="button" class="destination-tag" data-destination="Paris">Paris</button>
+          <button type="button" class="destination-tag" data-destination="Londres">Londres</button>
+          <button type="button" class="destination-tag" data-destination="Madrid">Madrid</button>
+          <button type="button" class="destination-tag" data-destination="Lisbonne">Lisbonne</button>
+          <button type="button" class="destination-tag" data-destination="New York">New York</button>
+          <button type="button" class="destination-tag" data-destination="Tokyo">Tokyo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Dictionnaire pour convertir les noms de villes en codes IATA
+    const CITY_TO_IATA = {
+      "Paris": "CDG", "Londres": "LHR", "Madrid": "MAD",
+      "Lisbonne": "LIS", "New York": "JFK", "Tokyo": "NRT",
+      "Berlin": "TXL", "Rome": "FCO", "Barcelone": "BCN"
+    };
+
+    window.onload = function() {
+      document.body.classList.remove('is-preload');
+    };
+
+    async function getAmadeusToken() {
+      // Remplace par TA_CLE_API et TON_API_SECRET (à ne pas partager)
+      const clientId = 'GQP6qHwMBVcvG9IcFDB4NT1qRGQlvPDu';
+      const clientSecret = 'GfjAkLtGSmPDAsso';
+
+      const proxyUrl = `https://api.allorigins.win/get?url=https://test.api.amadeus.com/v1/security/oauth2/token`;
+
+      try {
+        const response = await fetch(proxyUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            grant_type: 'client_credentials',
+            client_id: clientId,
+            client_secret: clientSecret
+          })
+        });
+
+        const data = await response.json();
+        return JSON.parse(data.contents).access_token;
+      } catch (error) {
+        console.error("Erreur lors de la récupération du token:", error);
+        throw new Error("Impossible de se connecter à Amadeus. Vérifie tes clés API.");
+      }
+    }
+
+    async function searchFlights(destination, date) {
+      const resultsContainer = document.getElementById('results-container');
+      resultsContainer.innerHTML = `
+        <div class="loading">
+          <i class="fas fa-spinner fa-spin"></i> Recherche des vols en cours...
+        </div>
+      `;
+      resultsContainer.style.display = 'block';
+
+      try {
+        // 1. Récupérer le token
+        const token = await getAmadeusToken();
+
+        // 2. Convertir le nom de ville en code IATA
+        const iataCode = CITY_TO_IATA[destination] || "JFK";
+
+        // 3. Chercher les vols via un proxy
+        const proxyUrl = `https://api.allorigins.win/get?url=https://test.api.amadeus.com/v2/shopping/flight-offers`;
+        const flightResponse = await fetch(proxyUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const flightData = await flightResponse.json();
+        const flights = JSON.parse(flightData.contents);
+
+        if (flights.data && flights.data.length > 0) {
+          let html = '<h3 style="color: #FF5A5F; margin-bottom: 1em; font-family: Poppins, sans-serif;">Vols disponibles</h3>';
+          flights.data.forEach(vol => {
+            const segment = vol.itineraries[0].segments[0];
+            const departureTime = new Date(segment.departure.at).toLocaleString('fr-FR', {
+              hour: '2-digit', minute: '2-digit'
+            });
+            const arrivalTime = new Date(segment.arrival.at).toLocaleString('fr-FR', {
+              hour: '2-digit', minute: '2-digit'
+            });
+
+            html += `
+              <div class="flight-result">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <p style="margin: 0.5em 0; font-weight: 600; font-family: Poppins, sans-serif;">
+                      <span style="color: #FF5A5F;">${segment.carrierCode}</span> |
+                      ${segment.departure.iataCode} → ${segment.arrival.iataCode}
+                    </p>
+                    <p style="margin: 0.5em 0; font-size: 0.9em; color: #666;">
+                      Départ: ${departureTime} | Arrivée: ${arrivalTime}
+                    </p>
+                  </div>
+                  <div style="text-align: right;">
+                    <p class="flight-price">${vol.price.total} ${vol.price.currency}</p>
+                    <a href="#" class="flight-link"
+                       onclick="window.open('https://www.google.com/flights?hl=fr#flt=${segment.departure.iataCode}.${segment.arrival.iataCode}.${date}', '_blank')">
+                      Voir sur Google Flights →
+                    </a>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          resultsContainer.innerHTML = html;
+        } else {
+          resultsContainer.innerHTML = `
+            <p style="text-align: center; padding: 2em; color: #666;">
+              Aucun vol trouvé pour cette destination/date.
+            </p>
+          `;
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        resultsContainer.innerHTML = `
+          <p style="text-align: center; padding: 2em; color: #FF5A5F;">
+            ${error.message.includes("API") ? error.message : "Erreur lors de la recherche. Vérifie ta connexion ou réessaye plus tard."}
+          </p>
+        `;
+      }
+    }
+
+    document.getElementById('search-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const destination = document.getElementById('destination-input').value;
+      const date = document.getElementById('date-input').value;
+
+      if (!destination || !date) {
+        alert('Veuillez saisir une destination et une date');
+        return;
+      }
+
+      searchFlights(destination, date);
+    });
+
+    document.getElementById('destinations-list').addEventListener('click', function(e) {
+      const btn = e.target.closest('.destination-tag');
+      if (!btn) return;
+
+      const destination = btn.getAttribute('data-destination');
+      const inOneMonth = new Date();
+      inOneMonth.setMonth(inOneMonth.getMonth() + 1);
+      const yyyy = inOneMonth.getFullYear();
+      const mm = String(inOneMonth.getMonth() + 1).padStart(2, '0');
+      const dd = String(inOneMonth.getDate()).padStart(2, '0');
+      const defaultDate = `${yyyy}-${mm}-${dd}`;
+
+      document.getElementById('destination-input').value = destination;
+      document.getElementById('date-input').value = defaultDate;
+      searchFlights(destination, defaultDate);
+    });
+
+    // === FOND DÉFILANT (ton code existant) ===
+    const IMG_SOURCES = [
+      'assets/css/images/bg1.jpg', 'assets/css/images/bg2.jpg',
+      'assets/css/images/bg3.jpg', 'assets/css/images/bg4.jpg'
+    ];
+    const SPEED_PX_S = 40;
+    const rail = document.getElementById('bg-rail');
+    function createSequence(urls) {
+      const frag = document.createDocumentFragment();
+      urls.forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = '';
+        frag.appendChild(img);
+      });
+      return frag;
+    }
+    rail.appendChild(createSequence(IMG_SOURCES));
+    rail.appendChild(createSequence(IMG_SOURCES));
+    function imagesLoaded(container) {
+      const imgs = Array.from(container.querySelectorAll('img'));
+      return Promise.all(imgs.map(img => {
+        if (img.complete && img.naturalWidth) return Promise.resolve();
+        return new Promise(res => img.addEventListener('load', res, { once: true }));
+      }));
+    }
+    imagesLoaded(rail).then(() => {
+      const totalW = rail.scrollWidth;
+      const seqW = totalW / 2;
+      const durationSec = seqW / SPEED_PX_S;
+      rail.style.setProperty('--seqw', seqW + 'px');
+      rail.style.setProperty('--dur', durationSec + 's');
+    });
+    function tryNextLogo(img) {
+      const candidates = [
+        'assets/css/images/logo.png', 'assets/css/images/logo.svg',
+        'assets/images/logo.png', 'assets/images/logo.svg',
+        'images/logo.png', 'logo.png'
+      ];
+      const i = Number(img.dataset.i || 0);
+      if (i >= candidates.length) return;
+      img.dataset.i = i + 1;
+      img.src = candidates[i] + '?v=' + Date.now();
+    }
+  </script>
+</body>
+</html>
